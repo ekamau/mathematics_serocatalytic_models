@@ -117,8 +117,6 @@ data_stan <- list(
 
 In the list above, the `include_seroreversion` variable is a `0|1` switch to indicate if the model should account for seroreversion (`= 1`) or not (`= 0`). There are up to three prior choices for the seroreversion rate parameter and six choices for the FOI parameter. The specification of prior choices and related parameters are described below.
 
-Q. What does is_binomial = TRUE do?
-
 **Using Stan to estimate FOI**
 
 We use the [Stan](https://mc-stan.org/) statistical programming language to write serocatalytic models and [rstan](https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html) R package, the R interface to Stan, to conveniently fit Stan models to the synthetic data in a Bayesian framework and access the posterior inferences.
@@ -130,8 +128,6 @@ The first four FOI prior choices (`foi_prior_choice` <= 4) use normal and Studen
 The uniform distribution can prove troublesome with MCMC, with the samplers taking much longer to converge than weakly informative alternatives. It is recommended that the fifth and six prior choices be used where a large prior range for the parameter value is desired. In most cases, the first four FOI prior choices will most likely suffice.
 
 There are three prior distribution choices for the seroreversion rate parameter: cauchy (`serorev_prior_choice = 1`), normal (`serorev_prior_choice = 2`) and uniform (`serorev_prior_choice = 3`), with user-provided parameters `serorev_prior_a` and `serorev_prior_b`.
-
-Q. when would you recommend to use one prior or the other?
 
 To run the models:
 
@@ -163,6 +159,19 @@ tibble(age=ages, simulated=n_seropositive, model_predicted=model_ppc$mean) %>%
 
 ```
 
+Compare the original FOI values used for data simulation with FOI estimates from the model:
+
+```{r, echo=TRUE, eval=FALSE}
+
+tibble::rownames_to_column(s, "parameter") %>% 
+  filter(grepl("^foi", parameter)) %>% 
+  select(mean) %>% 
+  cbind(fois) %>% 
+  rename(., all_of(c(model_predicted_FOI = "mean", original_FOI = "fois")))
+
+```
+
+
 **2) With seroreversion**
 
 The dynamics of seropositivity when assuming possible seroreversion would be:
@@ -172,7 +181,7 @@ The same example above but assuming possible seroreversion:
 
 ```{r echo=TRUE, eval=FALSE}
 
-mu <- 0.04 # no seroreversion
+mu <- 0.04 # seroreversion
 probability_seropositive <- map_dbl(ages, ~simulate_foi_age_exact(., fois, chunks, mu))
 n_seropositive <- vector(length = length(ages))
 for(i in seq_along(n_seropositive)) {
@@ -233,6 +242,18 @@ tibble(age=ages, simulated=n_seropositive, model_predicted=model_ppc$mean) %>%
   ggplot(aes(x=age, y=value, colour=name)) +
   geom_line() + geom_point() + labs(y = "Number seropositive", colour="") +
   ylim(0,100)
+
+```
+
+Compare the original FOI values used for data simulation with FOI estimates from the model:
+
+```{r, echo=TRUE, eval=FALSE}
+
+tibble::rownames_to_column(s, "parameter") %>% 
+  filter(grepl("^foi", parameter)) %>% 
+  select(mean) %>% 
+  cbind(fois) %>% 
+  rename(., all_of(c(model_predicted_FOI = "mean", original_FOI = "fois")))
 
 ```
 
@@ -322,13 +343,26 @@ tibble(age=ages, simulated=n_seropositive, model_predicted=model_ppc$mean) %>%
 
 ```
 
+
+Compare the original FOI values used for data simulation with FOI estimates from the model:
+
+```{r, echo=TRUE, eval=FALSE}
+
+tibble::rownames_to_column(s, "parameter") %>% 
+  filter(grepl("^foi", parameter)) %>% 
+  select(mean) %>% 
+  cbind(fois) %>% 
+  rename(., all_of(c(model_predicted_FOI = "mean", original_FOI = "fois")))
+
+```
+
 **2) With seroreversion**
 
 The same example above but assuming possible seroreversion:
 
 ```{r echo=TRUE, eval=FALSE}
 
-mu <- 0.04 # no seroreversion
+mu <- 0.04 # seroreversion
 probability_seropositive <- map_dbl(ages, ~simulate_foi_age_exact(., fois, chunks, mu))
 n_seropositive <- vector(length = length(ages))
 for(i in seq_along(n_seropositive)) {
@@ -382,7 +416,11 @@ Check the output and get summary statistics for parameter estimates:
 ```{r echo=TRUE, eval=FALSE}
 
 s <- as.data.frame(summary(fit, probs = c(0.025, 0.975))$summary)
+
 model_ppc <- tibble::rownames_to_column(s, "parameter") %>% filter(grepl("pos_pred", parameter))
+
+seroreversion_rate <- tibble::rownames_to_column(s, "parameter") %>% 
+  filter(grepl("", parameter))
 
 tibble(age=ages, simulated=n_seropositive, model_predicted=model_ppc$mean) %>%
   pivot_longer(-age) %>%
@@ -392,3 +430,15 @@ tibble(age=ages, simulated=n_seropositive, model_predicted=model_ppc$mean) %>%
 
 ```
 
+
+Compare the original FOI values used for data simulation with FOI estimates from the model:
+
+```{r, echo=TRUE, eval=FALSE}
+
+tibble::rownames_to_column(s, "parameter") %>% 
+  filter(grepl("^foi", parameter)) %>% 
+  select(mean) %>% 
+  cbind(fois) %>% 
+  rename(., all_of(c(model_predicted_FOI = "mean", original_FOI = "fois")))
+
+```
