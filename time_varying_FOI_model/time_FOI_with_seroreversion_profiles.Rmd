@@ -38,6 +38,7 @@ prob_infected_yr <- function(lambdas){
   tibble(year=year, prob=prob) %>% 
     ggplot(aes(x = year, y = prob)) +
     geom_line() +
+    geom_hline(yintercept = 0.015, linetype = 'dashed') +
     scale_y_continuous(breaks = seq(from = 0, to = 0.1, by = 0.01)) +
     labs(x = "Year", y = "Pr(infected in year)") +
     theme_bw() +
@@ -55,7 +56,7 @@ Seropositivity:
 ```{r echo=TRUE, eval=TRUE}
 
 ages <- seq(1, length(foiT), 1)
-sample_size <- 1000
+sample_size <- 100
 m_exposure <- matrix(nrow = length(ages), ncol = length(ages))
 
 for(i in seq_along(ages)) {
@@ -77,6 +78,7 @@ birth_cohorts <- year_survey - age_cohorts
 # (B) track seropositivity over time from birth:
 # - calculate seropositivity for each year from birth to 2024:
 prop_seropos_age_yr <- data.frame()
+mu <- 0.015
 
 for(age in age_cohorts){
   foi_start <- foi_index_start_per_obs[age]
@@ -84,11 +86,17 @@ for(age in age_cohorts){
   foi_end <- foi_start + len - 1
   fois <- fois_long[foi_start:foi_end]
   # solution - eqn 13 in manuscript - sum of lambdas
+  prop_seropos_age <- 0
   for(a in 1:age){
     year <- (year_survey-age) + a
-    prop_seropos_age <- 1 - exp(-sum(fois[1:a]))
+    # solves ODE exactly within pieces
+    lambda <- fois[a]
+    prop_seropos_age <- (1 / (lambda + mu)) * exp(-(lambda + mu)) * (lambda * (exp(lambda + mu) - 1) + prop_seropos_age * (lambda + mu))
+    
     prop_seropos_age_yr <- rbind(prop_seropos_age_yr, c(age, prop_seropos_age, year))
   }
+  
+
 }
 
 colnames(prop_seropos_age_yr) <- c("age", "prop_seropos", "year")
@@ -118,24 +126,65 @@ $~$
 
 # (C) seropositivity in year of survey: T is constant. calculate the sum of lambdas upto the current age.
 
+# 1) with seroreversion:
 prop_seropos_age_yr2024 <- data.frame()
+mu <- 0.015
 
 for(age in ages){
   foi_start <- foi_index_start_per_obs[age]
   len <- n_fois_exposed_per_obs[age]
   foi_end <- foi_start + len - 1
-  # solution - eqn 13 in manuscript - sum of lambdas for T=2024
-  prop_seropos_age <- 1 - exp(-sum(fois_long[foi_start:foi_end]))
+  fois <- fois_long[foi_start:foi_end]
+  # solution - for T=2024
+  
+  prop_seropos_age <- 0
+  for(a in 1:age){
+    # solves ODE exactly within pieces
+    lambda <- fois[a]
+    prop_seropos_age <- (1 / (lambda + mu)) * exp(-(lambda + mu)) * (lambda * (exp(lambda + mu) - 1) + prop_seropos_age * (lambda + mu))
+    
+  }
   prop_seropos_age_yr2024 <- rbind(prop_seropos_age_yr2024, c(age, prop_seropos_age))
+  
 }
 
 colnames(prop_seropos_age_yr2024) <- c("age", "seropos")
 data_cohorts <- prop_seropos_age_yr2024 %>% filter(age %in% age_cohorts)
 
+
+# 2) without seroreversion
+prop_seropos_age_yr2024_noSerorev <- data.frame()
+mu <- 0.0
+
+for(age in ages){
+  foi_start <- foi_index_start_per_obs[age]
+  len <- n_fois_exposed_per_obs[age]
+  foi_end <- foi_start + len - 1
+  fois <- fois_long[foi_start:foi_end]
+  # solution - for T=2024
+  
+  prop_seropos_age <- 0
+  for(a in 1:age){
+    # solves ODE exactly within pieces
+    lambda <- fois[a]
+    prop_seropos_age <- (1 / (lambda + mu)) * exp(-(lambda + mu)) * (lambda * (exp(lambda + mu) - 1) + prop_seropos_age * (lambda + mu))
+    
+  }
+  prop_seropos_age_yr2024_noSerorev <- rbind(prop_seropos_age_yr2024_noSerorev, c(age, prop_seropos_age))
+  
+}
+
+colnames(prop_seropos_age_yr2024_noSerorev) <- c("age", "seropos")
+prop_seropos_age_yr2024_noSerorev$seropos[is.na(prop_seropos_age_yr2024_noSerorev$seropos)] <- tail(prop_seropos_age_yr2024_noSerorev$seropos[!is.na(prop_seropos_age_yr2024_noSerorev$seropos)], 1)
+
+
+# plot both models with and without seroreversion
+
 ggplot() +
   geom_line(data = prop_seropos_age_yr2024, aes(x = age, y = seropos), linetype = "dashed") +
   geom_point(data = data_cohorts, aes(x = age, y = seropos, shape = as.factor(age), 
                                       fill = as.factor(age)), size = 3) +
+  geom_line(data = prop_seropos_age_yr2024_noSerorev, aes(x = age, y = seropos)) +
   scale_shape_manual(values = c(21,22,23,24,25,1)) +
   scale_y_continuous(labels = scales::percent_format(accuracy = 1), limits = c(0,1),
                      breaks = seq(0,1,by=0.1)) +
