@@ -137,7 +137,7 @@ ggplot(prop_seropos_df, aes(x = year, y = prop_seropos, group = as.factor(age),
                  fill = as.factor(age), shape = as.factor(age)), size = 3) +
   scale_shape_manual(values = c("16"=0,"32"=1,"44"=25,"52"=17,"62"=23,"72"=15,"85"=16)) +
   scale_y_continuous(labels = scales::percent) +
-  labs(x = "Age", y = "Seropositivity") +
+  labs(x = "Year", y = "Seropositivity") +
   theme_bw() +
   theme(legend.position = "none")
 
