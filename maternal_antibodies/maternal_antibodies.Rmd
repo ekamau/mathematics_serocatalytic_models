@@ -1,0 +1,116 @@
+---
+title: "Maternal antibodies"
+author: "ekamau"
+date: "2024-03-24"
+output: html_document
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE, eval=TRUE, results='hide'}
+
+# load libraries:
+if (!require("pacman")) install.packages("pacman")
+p_load(tidyverse, reshape2, patchwork)
+
+```
+
+$~$
+
+```{r echo=TRUE, eval=TRUE}
+
+# functions for the system equation solutions:
+constant_foi <- function(a, lambda, rho){
+  prop_m = exp(-rho*a) # maternal antibodies
+  prop_s = (rho/(rho+lambda))*(exp(-lambda*a) - exp(-rho*a)) # susceptible proportion
+  prop_x = ((rho*(1-exp(-lambda*a))) - (lambda*(1-exp(-rho*a))))/(rho-lambda) # seropositive proportion v1
+  prop_x2 = 1-exp(-lambda*a) # seropositive proportion v2
+  
+  return(c(prop_m, prop_s, prop_x, prop_x2))
+}
+
+ages <- seq(0.1,85,by=0.1)
+
+```
+
+$~$
+Scenario where the rate of decay of maternal antibodies ($\rho$) is higher than the force of infection (FOI == $\lambda$):
+$~$
+
+```{r echo=TRUE, eval=TRUE}
+
+rho <- 2; lambda = 0.05
+prop_seropos_df <- data.frame()
+for(age in ages){
+  out = constant_foi(age, lambda, rho)
+  prop_seropos_df = rbind(prop_seropos_df, c(age, out))
+}
+
+colnames(prop_seropos_df) <- c("age", "prop_m", "prop_s", "prop_x", "prop_x2")
+prop_seropos_df1 <- melt(prop_seropos_df, id.vars = c("age"), variable.name = "compartment", value.name = "Proportion")
+
+figA <- prop_seropos_df1 %>% 
+  ggplot(aes(x = age, y = Proportion, color = as.factor(compartment), linetype = as.factor(compartment))) +
+  geom_line() +
+  scale_color_manual(values = c("prop_m"="#009999", "prop_x"="#0000FF", "prop_s"="#E69F00", 
+                                "prop_x2"="#0000FF")) +
+  scale_linetype_manual(values = c("prop_m"="solid", "prop_s"="solid", "prop_x"="solid", 
+                                   "prop_x2"="dashed")) +
+  labs(x = "Age, years", y = "Seropositivity", title = "A. Low FOI") +
+  guides(linetype = "none", color = "none") +
+  scale_x_continuous(trans="log10", breaks = c(0.1,1,5,10,20,35,seq(50,85,by=20)),
+                labels = function(x){sprintf("%.0f", x)}) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(size = 6))
+
+```
+
+$~$
+Scenario with higher force of infection (FOI):
+$~$
+
+```{r echo=TRUE, eval=TRUE}
+
+rho <- 2; lambda = 0.4
+prop_seropos_df2 <- data.frame()
+for(age in ages){
+  out = constant_foi(age, lambda, rho)
+  prop_seropos_df2 = rbind(prop_seropos_df2, c(age, out))
+}
+
+colnames(prop_seropos_df2) <- c("age", "prop_m", "prop_s", "prop_x", "prop_x2")
+prop_seropos_df3 <- melt(prop_seropos_df2, id.vars = c("age"), variable.name = "compartment", value.name = "Proportion")
+
+figB <- prop_seropos_df3 %>% 
+  ggplot(aes(x = age, y = Proportion, color = as.factor(compartment), linetype = as.factor(compartment))) +
+  geom_line() +
+  scale_color_manual(name = "",
+                     values = c("prop_m"="#009999", "prop_s"="#E69F00", "prop_x"="#0000FF",  
+                                "prop_x2"="#0000FF"),
+                     labels = c("M(a)", "S(a)", "X(a)", "X(a)")) +
+  scale_linetype_manual(name = "",
+                        values = c("prop_m"="solid", "prop_s"="solid", "prop_x"="solid", 
+                                   "prop_x2"="dashed"),
+                        labels = c("M(a)", "S(a)", "X(a)", "X(a)")) +
+  labs(x = "Age, years", y = "Seropositivity", title = "B. High FOI", linetype = "") +
+  scale_x_continuous(trans="log10", breaks = c(0.1,1,5,10,20,35,seq(50,85,by=20)),
+                labels = function(x){sprintf("%.0f", x)}) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(size = 6))
+
+```
+
+```{r echo=TRUE, eval=TRUE, out.width = "100%"}
+
+figA + figB + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
+
+```
