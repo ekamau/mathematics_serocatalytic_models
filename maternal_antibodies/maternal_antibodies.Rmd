@@ -27,10 +27,10 @@ $~$
 ```{r echo=TRUE, eval=TRUE}
 
 # functions for the system equation solutions:
-constant_foi <- function(a, lambda, rho){
-  prop_m = exp(-rho*a) # maternal antibodies
-  prop_s = (rho/(rho+lambda))*(exp(-lambda*a) - exp(-rho*a)) # susceptible proportion
-  prop_x = ((rho*(1-exp(-lambda*a))) - (lambda*(1-exp(-rho*a))))/(rho-lambda) # seropositive proportion v1
+constant_foi <- function(a, lambda, gamma){
+  prop_m = exp(-gamma*a) # maternal antibodies
+  prop_s = (gamma/(gamma+lambda))*(exp(-lambda*a) - exp(-gamma*a)) # susceptible proportion
+  prop_x = ((gamma*(1-exp(-lambda*a))) - (lambda*(1-exp(-gamma*a))))/(gamma-lambda) # seropositive proportion v1
   prop_x2 = 1-exp(-lambda*a) # seropositive proportion v2
   
   return(c(prop_m, prop_s, prop_x, prop_x2))
@@ -41,15 +41,15 @@ ages <- seq(0.1,85,by=0.1)
 ```
 
 $~$
-Scenario where the rate of decay of maternal antibodies ($\rho$) is higher than the force of infection (FOI == $\lambda$):
+Scenario where the rate of decay of maternal antibodies ($\gamma$) is higher than the force of infection (FOI == $\lambda$):
 $~$
 
 ```{r echo=TRUE, eval=TRUE}
 
-rho <- 2; lambda = 0.05
+gamma <- 2; lambda = 0.05
 prop_seropos_df <- data.frame()
 for(age in ages){
-  out = constant_foi(age, lambda, rho)
+  out = constant_foi(age, lambda, gamma)
   prop_seropos_df = rbind(prop_seropos_df, c(age, out))
 }
 
@@ -79,10 +79,10 @@ $~$
 
 ```{r echo=TRUE, eval=TRUE}
 
-rho <- 2; lambda = 0.4
+gamma <- 2; lambda = 0.4
 prop_seropos_df2 <- data.frame()
 for(age in ages){
-  out = constant_foi(age, lambda, rho)
+  out = constant_foi(age, lambda, gamma)
   prop_seropos_df2 = rbind(prop_seropos_df2, c(age, out))
 }
 
@@ -114,3 +114,4 @@ figB <- prop_seropos_df3 %>%
 figA + figB + plot_layout(guides = "collect") & theme(legend.position = 'bottom')
 
 ```
+

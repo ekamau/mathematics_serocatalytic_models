@@ -364,10 +364,10 @@ text-align: justify}
 <pre><code>## Loading required package: pacman</code></pre>
 <p><span class="math inline">\(~\)</span></p>
 <pre class="r"><code># functions for the system equation solutions:
-constant_foi &lt;- function(a, lambda, rho){
-  prop_m = exp(-rho*a) # maternal antibodies
-  prop_s = (rho/(rho+lambda))*(exp(-lambda*a) - exp(-rho*a)) # susceptible proportion
-  prop_x = ((rho*(1-exp(-lambda*a))) - (lambda*(1-exp(-rho*a))))/(rho-lambda) # seropositive proportion v1
+constant_foi &lt;- function(a, lambda, gamma){
+  prop_m = exp(-gamma*a) # maternal antibodies
+  prop_s = (gamma/(gamma+lambda))*(exp(-lambda*a) - exp(-gamma*a)) # susceptible proportion
+  prop_x = ((gamma*(1-exp(-lambda*a))) - (lambda*(1-exp(-gamma*a))))/(gamma-lambda) # seropositive proportion v1
   prop_x2 = 1-exp(-lambda*a) # seropositive proportion v2
   
   return(c(prop_m, prop_s, prop_x, prop_x2))
@@ -375,12 +375,12 @@ constant_foi &lt;- function(a, lambda, rho){
 
 ages &lt;- seq(0.1,85,by=0.1)</code></pre>
 <p><span class="math inline">\(~\)</span> Scenario where the rate of
-decay of maternal antibodies (<span class="math inline">\(\rho\)</span>)
-is higher than the force of infection (FOI == <span class="math inline">\(\lambda\)</span>): <span class="math inline">\(~\)</span></p>
-<pre class="r"><code>rho &lt;- 2; lambda = 0.05
+decay of maternal antibodies (<span class="math inline">\(\gamma\)</span>) is higher than the force of
+infection (FOI == <span class="math inline">\(\lambda\)</span>): <span class="math inline">\(~\)</span></p>
+<pre class="r"><code>gamma &lt;- 2; lambda = 0.05
 prop_seropos_df &lt;- data.frame()
 for(age in ages){
-  out = constant_foi(age, lambda, rho)
+  out = constant_foi(age, lambda, gamma)
   prop_seropos_df = rbind(prop_seropos_df, c(age, out))
 }
 
@@ -403,10 +403,10 @@ figA &lt;- prop_seropos_df1 %&gt;%
         axis.text.x = element_text(size = 6))</code></pre>
 <p><span class="math inline">\(~\)</span> Scenario with higher force of
 infection (FOI): <span class="math inline">\(~\)</span></p>
-<pre class="r"><code>rho &lt;- 2; lambda = 0.4
+<pre class="r"><code>gamma &lt;- 2; lambda = 0.4
 prop_seropos_df2 &lt;- data.frame()
 for(age in ages){
-  out = constant_foi(age, lambda, rho)
+  out = constant_foi(age, lambda, gamma)
   prop_seropos_df2 = rbind(prop_seropos_df2, c(age, out))
 }
 

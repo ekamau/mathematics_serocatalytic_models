@@ -27,8 +27,8 @@ $~$
 ```{r echo=TRUE, eval=TRUE}
 
 # functions for the system equation solutions:
-constant_foi <- function(a, lambda, mu){
-  prop_x = 1-((lambda-mu)/(lambda*exp((lambda-mu)*age)-mu)) # seropositive proportion v1 == includes death
+constant_foi <- function(a, lambda, epsilon){
+  prop_x = 1-((lambda-epsilon)/(lambda*exp((lambda-epsilon)*age)-epsilon)) # seropositive proportion v1 == includes death
   prop_x2 = 1-exp(-lambda*a) # seropositive proportion v2 == constant FOI
   
   return(c(prop_x, prop_x2))
@@ -39,15 +39,15 @@ ages <- seq(0.1,65,by=0.1)
 ```
 
 $~$
-Scenario where there's low risk of death due to infection (mu == $\mu$) and the force of infection ($\lambda$) is assumed to be constant:
+Scenario where there's low risk of death due to infection (epsilon == $\epsilon$) and the force of infection ($\lambda$) is assumed to be constant:
 $~$
 
 ```{r echo=TRUE, eval=TRUE}
 
-mu <- 0.04; lambda = 0.1
+epsilon <- 0.04; lambda = 0.1
 prop_seropos_df <- data.frame()
 for(age in ages){
-  out = constant_foi(age, lambda, mu)
+  out = constant_foi(age, lambda, epsilon)
   prop_seropos_df = rbind(prop_seropos_df, c(age, out))
 }
 
@@ -58,7 +58,7 @@ figA <- prop_seropos_df1 %>%
   ggplot(aes(x = age, y = value, color = as.factor(Proportion))) +
   geom_line() +
   scale_color_manual(values = c("prop_nodeath"="#0000FF", "prop_death"="#E69F00")) +
-  labs(x = "Age, years", y = "Seropositivity", title = "A. Low mu") +
+  labs(x = "Age, years", y = "Seropositivity", title = "A. Low epsilon") +
   guides(color = "none") +
   scale_x_continuous(trans="log10", breaks = c(0.1,1,5,10,15,20,seq(30,70,by=15)),
                 labels = function(x){sprintf("%.0f", x)}) +
@@ -70,15 +70,15 @@ figA <- prop_seropos_df1 %>%
 ```
 
 $~$
-Scenario where there's high risk of death due to infection (mu == $\mu$) and the force of infection ($\lambda$) is assumed to be constant:
+Scenario where there's high risk of death due to infection (epsilon == $\epsilon$) and the force of infection ($\lambda$) is assumed to be constant:
 $~$
 
 ```{r echo=TRUE, eval=TRUE}
 
-mu <- 1.2; lambda = 0.15
+epsilon <- 1.2; lambda = 0.15
 prop_seropos_df2 <- data.frame()
 for(age in ages){
-  out = constant_foi(age, lambda, mu)
+  out = constant_foi(age, lambda, epsilon)
   prop_seropos_df2 = rbind(prop_seropos_df2, c(age, out))
 }
 
@@ -91,13 +91,12 @@ figB <- prop_seropos_df3 %>%
   scale_color_manual(name = "",
                      values = c("prop_nodeath"="#0000FF", "prop_death"="#E69F00"),
                      labels = c("w/ death", "w/o death")) +
-  labs(x = "Age, years", y = "", title = "B. High mu") +
+  labs(x = "Age, years", y = "", title = "B. High epsilon") +
   scale_x_continuous(trans="log10", breaks = c(0.1,1,5,10,15,20,seq(30,70,by=15)),
                 labels = function(x){sprintf("%.0f", x)}) +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5),
         axis.text.x = element_text(size = 6))
-
 
 ```
 
